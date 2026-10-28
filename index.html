@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ExpiryDesk — Track expiration dates</title>
+<meta name="description" content="ExpiryDesk tracks expiration dates for food, medicines, cosmetics, documents, and personal items. Private, offline-first, stored in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">E</span>
+      <span class="brand-name">ExpiryDesk</span>
+    </div>
+    <nav class="side-nav">
+      <button type="button" class="nav-btn" data-nav="dashboard">Dashboard</button>
+      <button type="button" class="nav-btn" data-nav="items">All Items</button>
+      <button type="button" class="nav-btn" data-nav="add">Add Item</button>
+      <button type="button" class="nav-btn" data-nav="settings">Settings</button>
+    </nav>
+    <p class="side-note">Private. Your items stay in this browser. No account, no cloud.</p>
+  </aside>
+
+  <main class="main">
+    <p class="storage-warning" id="storageWarning" hidden></p>
+
+    <!-- Dashboard -->
+    <section class="view" id="view-dashboard" aria-labelledby="dashHeading">
+      <h1 id="dashHeading">Dashboard</h1>
+      <p class="intro">What needs attention, and what is still safe.</p>
+      <div class="stats">
+        <button type="button" class="stat stat-soon" data-stat-filter="soon">
+          <span class="stat-num" id="statSoon">0</span>
+          <span class="stat-label">Expiring soon</span>
+        </button>
+        <button type="button" class="stat stat-expired" data-stat-filter="expired">
+          <span class="stat-num" id="statExpired">0</span>
+          <span class="stat-label">Expired</span>
+        </button>
+        <button type="button" class="stat stat-active" data-stat-filter="all-active">
+          <span class="stat-num" id="statActive">0</span>
+          <span class="stat-label">Active items</span>
+        </button>
+      </div>
+
+      <h2>Expiring soon</h2>
+      <div id="soonList" class="item-list"></div>
+      <p class="empty" id="soonEmpty" hidden>No items expiring within your warning window. Good news.</p>
+
+      <h2>Already expired</h2>
+      <div id="expiredList" class="item-list"></div>
+      <p class="empty" id="expiredEmpty" hidden>Nothing expired. Nothing to throw out.</p>
+    </section>
+
+    <!-- All Items -->
+    <section class="view" id="view-items" hidden aria-labelledby="itemsHeading">
+      <h1 id="itemsHeading">All Items</h1>
+      <div class="filters">
+        <div class="field">
+          <label for="searchInput">Search</label>
+          <input type="search" id="searchInput" placeholder="Search by name or note" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="categoryFilter">Category</label>
+          <select id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="Food">Food</option>
+            <option value="Medicine">Medicine</option>
+            <option value="Cosmetics">Cosmetics</option>
+            <option value="Documents">Documents</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="safe">Safe</option>
+            <option value="soon">Expiring soon</option>
+            <option value="expired">Expired</option>
+            <option value="used">Used</option>
+            <option value="discarded">Discarded</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sortSelect">Sort</label>
+          <select id="sortSelect">
+            <option value="earliest">Earliest expiration</option>
+            <option value="latest">Latest expiration</option>
+            <option value="alpha">Alphabetical</option>
+          </select>
+        </div>
+      </div>
+      <p class="result-count" id="resultCount" aria-live="polite"></p>
+      <div id="itemsList" class="item-list"></div>
+      <p class="empty" id="itemsEmpty" hidden>No items yet. Add your first item to start tracking.</p>
+      <p class="empty" id="itemsNoMatch" hidden>Nothing matches these filters. Try clearing the search or a filter.</p>
+    </section>
+
+    <!-- Add / Edit Item -->
+    <section class="view" id="view-add" hidden aria-labelledby="formHeading">
+      <h1 id="formHeading">Add Item</h1>
+      <form id="itemForm" novalidate>
+        <div class="field">
+          <label for="itemName">Name</label>
+          <input type="text" id="itemName" maxlength="120" required autocomplete="off">
+          <p class="field-error" id="nameError" hidden>Enter a name for the item.</p>
+        </div>
+        <div class="field">
+          <label for="itemCategory">Category</label>
+          <select id="itemCategory" required>
+            <option value="">Choose a category</option>
+            <option value="Food">Food</option>
+            <option value="Medicine">Medicine</option>
+            <option value="Cosmetics">Cosmetics</option>
+            <option value="Documents">Documents</option>
+            <option value="Other">Other</option>
+          </select>
+          <p class="field-error" id="categoryError" hidden>Choose a category.</p>
+        </div>
+        <div class="field">
+          <label for="itemDate">Expiration date</label>
+          <input type="date" id="itemDate" required>
+          <p class="field-error" id="dateError" hidden>Enter a valid expiration date.</p>
+        </div>
+        <div class="field">
+          <label for="itemNotes">Notes (optional)</label>
+          <textarea id="itemNotes" rows="3" maxlength="500" placeholder="Batch, location, or anything useful"></textarea>
+        </div>
+        <p class="form-message" id="formMessage" aria-live="polite" hidden></p>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="submitBtn">Save item</button>
+          <button type="button" class="btn-secondary" id="cancelEditBtn" hidden>Cancel editing</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Settings -->
+    <section class="view" id="view-settings" hidden aria-labelledby="settingsHeading">
+      <h1 id="settingsHeading">Settings</h1>
+
+      <h2>Reminder threshold</h2>
+      <p class="intro">Items expiring within this many days count as "expiring soon".</p>
+      <fieldset class="threshold-group">
+        <legend class="sr-only">Warning threshold in days</legend>
+        <label><input type="radio" name="threshold" value="3"> 3 days</label>
+        <label><input type="radio" name="threshold" value="7"> 7 days</label>
+        <label><input type="radio" name="threshold" value="14"> 14 days</label>
+        <label><input type="radio" name="threshold" value="30"> 30 days</label>
+      </fieldset>
+
+      <h2>Backup and restore</h2>
+      <p class="intro">Export saves everything to a JSON file on your device. Import adds items from a backup file without deleting what you already have; items with an ID you already own are skipped.</p>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="exportBtn">Export backup</button>
+        <label class="btn-secondary file-label" for="importFile">Import backup</label>
+        <input type="file" id="importFile" accept=".json,application/json" class="sr-only">
+      </div>
+      <p class="form-message" id="backupMessage" aria-live="polite" hidden></p>
+
+      <h2>Clear all data</h2>
+      <p class="intro">This removes every item and resets the threshold to 7 days. It cannot be undone, so export a backup first if you need one.</p>
+      <button type="button" class="btn-danger" id="clearBtn">Clear all data</button>
+      <p class="form-message" id="clearMessage" aria-live="polite" hidden></p>
+    </section>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button type="button" class="nav-btn" data-nav="dashboard">Dashboard</button>
+  <button type="button" class="nav-btn" data-nav="items">All Items</button>
+  <button type="button" class="nav-btn nav-add" data-nav="add" aria-label="Add item">+</button>
+  <button type="button" class="nav-btn" data-nav="settings">Settings</button>
+</nav>
+
+<script src="script.js"></script>
+</body>
+</html>
